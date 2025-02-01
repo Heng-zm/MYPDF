@@ -1,0 +1,43 @@
+name: macOS Desktop Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: 🎉 macOS Build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          architecture: x64
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS desktop app
+        run: flutter build macos --release
+
+      - name: Create build directory
+        run: mkdir -p build/macos/Build/Products/Release
+
+      - name: Move app to build directory
+        run: mv build/macos/Build/Products/Release/Runner.app build/macos/Build/Products/Release/
+
+      - name: Zip the app
+        run: zip -r -9 MyDesktopApp.zip build/macos/Build/Products/Release/Runner.app
+
+      - name: Upload app to GitHub Releases
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/macos/Build/Products/Release/MyDesktopApp.zip
+          tag: v1.0
+          overwrite: true
+          body: "This is the first release"
